@@ -10,16 +10,8 @@
 ```
 .
 ├── src/
-│   ├── categories/
-│   │   ├── category.entity.ts
-│   │   ├── categories.module.ts
-│   │   ├── categories.service.ts
-│   │   └── categories.controller.ts
-│   ├── products/
-│   │   ├── product.entity.ts
-│   │   ├── products.module.ts
-│   │   ├── products.service.ts
-│   │   └── products.controller.ts
+│   ├── categories/ ...
+│   ├── products/ ...
 │   ├── migrations/
 │   ├── data-source.ts
 │   ├── app.module.ts
@@ -35,21 +27,6 @@
 cp .env.example .env
 docker compose up --build
 ```
-
-### API Endpoints
-
-| Method | URL                 | Опис               |
-| ------ | ------------------- | ------------------ |
-| GET    | /api/categories     | Список категорій   |
-| GET    | /api/categories/:id | Одна категорія     |
-| POST   | /api/categories     | Створити категорію |
-| PATCH  | /api/categories/:id | Оновити категорію  |
-| DELETE | /api/categories/:id | Видалити категорію |
-| GET    | /api/products       | Список продуктів   |
-| GET    | /api/products/:id   | Один продукт       |
-| POST   | /api/products       | Створити продукт   |
-| PATCH  | /api/products/:id   | Оновити продукт    |
-| DELETE | /api/products/:id   | Видалити продукт   |
 
 ### Тест створення категорії
 
@@ -108,59 +85,9 @@ docker compose up --build
 {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
 ```
 
-### Тест 401 — запит без токена
-
-```
-{"message":"Missing authorization token","error":"Unauthorized","statusCode":401}
-```
-
 ---
 
 ## Практичне заняття №6 — Interceptors + Exception Filters + Swagger
-
-### Структура репозиторію
-
-```
-.
-├── src/
-│   ├── auth/ ...
-│   ├── users/ ...
-│   ├── categories/ ...
-│   ├── products/ ...
-│   ├── common/
-│   │   ├── enums/
-│   │   │   └── role.enum.ts
-│   │   ├── guards/
-│   │   │   ├── jwt-auth.guard.ts
-│   │   │   └── roles.guard.ts
-│   │   ├── decorators/
-│   │   │   ├── current-user.decorator.ts
-│   │   │   └── roles.decorator.ts
-│   │   ├── interceptors/
-│   │   │   ├── logging.interceptor.ts
-│   │   │   └── transform.interceptor.ts
-│   │   ├── filters/
-│   │   │   └── http-exception.filter.ts
-│   │   └── pipes/
-│   │       └── trim.pipe.ts
-│   ├── migrations/
-│   ├── main.ts
-│   └── app.module.ts
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-
-### Запуск проекту
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-### Swagger UI
-
-http://localhost:3000/api/docs
 
 ### Формат успішної відповіді
 
@@ -186,25 +113,121 @@ http://localhost:3000/api/docs
 }
 ```
 
-### Приклад логів (LoggingInterceptor)
+### Swagger UI
+
+http://localhost:3000/api/docs
+
+---
+
+## Практичне заняття №7 — Redis + Pagination + Filtering
+
+### Структура репозиторію
 
 ```
-[HTTP] GET /api/products — 200 — 12ms
-[HTTP] POST /auth/login — 200 — 45ms
-[HTTP] POST /api/products — 201 — 23ms
+.
+├── src/
+│   ├── auth/ ...
+│   ├── users/ ...
+│   ├── categories/ ...
+│   ├── products/
+│   │   ├── dto/
+│   │   │   ├── create-product.dto.ts
+│   │   │   ├── update-product.dto.ts
+│   │   │   └── product-query.dto.ts
+│   │   ├── product.entity.ts
+│   │   ├── products.module.ts
+│   │   ├── products.service.ts
+│   │   └── products.controller.ts
+│   ├── seeds/
+│   │   └── seed.ts
+│   ├── common/ ...
+│   ├── migrations/
+│   ├── main.ts
+│   └── app.module.ts
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
-### Тест помилки з traceId
+### Запуск проекту
+
+```bash
+cp .env.example .env
+docker compose up --build
+docker compose run --rm app npm run seed
+```
+
+### API: GET /api/products
+
+| Параметр   | Тип    | Default    | Опис                          |
+|------------|--------|------------|-------------------------------|
+| page       | number | 1          | Номер сторінки                |
+| pageSize   | number | 10         | Елементів на сторінку (max 100) |
+| sort       | string | createdAt  | Поле сортування               |
+| order      | asc/desc | desc     | Напрямок                      |
+| categoryId | number | -          | Фільтр за категорією          |
+| minPrice   | number | -          | Мінімальна ціна               |
+| maxPrice   | number | -          | Максимальна ціна              |
+| search     | string | -          | Пошук за назвою (ILIKE)       |
+
+### Тест пагінації
 
 ```
-curl http://localhost:3000/api/products/999
+curl "http://localhost:3000/api/products?page=1&pageSize=5"
 
 {
-  "error": {
-    "code": 404,
-    "message": "Product #999 not found",
-    "traceId": "x7y8z9ab-cdef-0123-4567-890abcdef012"
+  "data": {
+    "items": [...],
+    "meta": { "page": 1, "pageSize": 5, "total": 30, "totalPages": 6 }
   },
-  "timestamp": "2026-06-02T10:32:00.000Z"
+  "statusCode": 200,
+  "timestamp": "2026-06-02T10:30:00.000Z"
 }
+```
+
+### Тест фільтрації
+
+```
+curl "http://localhost:3000/api/products?categoryId=1&minPrice=500"
+
+{
+  "data": {
+    "items": [MacBook Pro, iPhone 16, iPad Air ...],
+    "meta": { "page": 1, "pageSize": 10, "total": 6, "totalPages": 1 }
+  },
+  "statusCode": 200
+}
+```
+
+### Тест пошуку
+
+```
+curl "http://localhost:3000/api/products?search=mac"
+
+{
+  "data": {
+    "items": [{"name": "MacBook Pro"}, ...],
+    "meta": { "total": 3 }
+  }
+}
+```
+
+### Тест кешування (Redis)
+
+```
+docker compose exec redis redis-cli KEYS "products:*"
+
+1) "products:{\"page\":1,\"pageSize\":10,\"sort\":\"createdAt\",\"order\":\"desc\"}"
+```
+
+### Тест інвалідації кешу
+
+```
+# До POST — є ключ
+docker compose exec redis redis-cli KEYS "products:*"
+1) "products:{...}"
+
+# Після POST /api/products
+docker compose exec redis redis-cli KEYS "products:*"
+(empty array)
 ```
