@@ -29,7 +29,6 @@
 ├── Dockerfile
 ├── docker-compose.yml
 └── README.md
-...
 ```
 
 ## Запуск проекту
@@ -182,4 +181,120 @@ curl -X POST http://localhost:3000/api/products \
   -d '{"name": "iPhone 16", "price": 999.99, "stock": 50, "categoryId": 1}'
 
 {"id":2,"name":"iPhone 16","price":999.99,"stock":50,"category":{"id":1},"createdAt":"2026-06-02T10:01:00.000Z","updatedAt":"2026-06-02T10:01:00.000Z"}
+```
+
+---
+
+## Практичне заняття №5 — JWT Authentication + Guards + RBAC
+
+### Структура репозиторію
+
+```
+.
+├── src/
+│   ├── auth/
+│   │   ├── dto/
+│   │   │   ├── register.dto.ts
+│   │   │   └── login.dto.ts
+│   │   ├── auth.module.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.controller.ts
+│   ├── users/
+│   │   ├── user.entity.ts
+│   │   ├── users.module.ts
+│   │   └── users.service.ts
+│   ├── common/
+│   │   ├── enums/
+│   │   │   └── role.enum.ts
+│   │   ├── guards/
+│   │   │   ├── jwt-auth.guard.ts
+│   │   │   └── roles.guard.ts
+│   │   ├── decorators/
+│   │   │   ├── current-user.decorator.ts
+│   │   │   └── roles.decorator.ts
+│   │   └── pipes/
+│   │       └── trim.pipe.ts
+│   ├── categories/ ...
+│   ├── products/ ...
+│   ├── migrations/
+│   ├── data-source.ts
+│   ├── main.ts
+│   └── app.module.ts
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
+```
+
+### Запуск проекту
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+### API Endpoints
+
+| Method | URL                   | Auth | Role  |
+|--------|-----------------------|------|-------|
+| POST   | /auth/register        | -    | -     |
+| POST   | /auth/login           | -    | -     |
+| GET    | /api/categories       | -    | -     |
+| POST   | /api/categories       | JWT  | admin |
+| PATCH  | /api/categories/:id   | JWT  | admin |
+| DELETE | /api/categories/:id   | JWT  | admin |
+| GET    | /api/products         | -    | -     |
+| POST   | /api/products         | JWT  | admin |
+| PATCH  | /api/products/:id     | JWT  | admin |
+| DELETE | /api/products/:id     | JWT  | admin |
+
+### Тест реєстрації
+
+```
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@test.com", "password": "password123", "name": "Admin"}'
+
+{"id":1,"email":"admin@test.com","name":"Admin","role":"user","createdAt":"2026-06-02T10:00:00.000Z"}
+```
+
+### Тест логіну
+
+```
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@test.com", "password": "password123"}'
+
+{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
+```
+
+### Тест 401 — запит без токена
+
+```
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Hacked Product", "price": 1}'
+
+{"message":"Missing authorization token","error":"Unauthorized","statusCode":401}
+```
+
+### Тест 403 — запит з роллю user
+
+```
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -d '{"name": "Blocked Product", "price": 99}'
+
+{"message":"Insufficient permissions","error":"Forbidden","statusCode":403}
+```
+
+### Тест успішного створення від admin
+
+```
+curl -X POST http://localhost:3000/api/products \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+  -d '{"name": "MacBook Pro", "price": 2499.99, "stock": 10}'
+
+{"id":3,"name":"MacBook Pro","price":2499.99,"stock":10,"createdAt":"2026-06-02T10:05:00.000Z","updatedAt":"2026-06-02T10:05:00.000Z"}
 ```
