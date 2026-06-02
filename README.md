@@ -21,8 +21,6 @@
 │   │   ├── products.service.ts
 │   │   └── products.controller.ts
 │   ├── migrations/
-│   │   ├── 1700000001-CreateTables.ts
-│   │   └── <timestamp>-AddIsActiveToProducts.ts
 │   ├── data-source.ts
 │   ├── app.module.ts
 │   └── main.ts
@@ -31,10 +29,10 @@
 └── README.md
 ```
 
-## Запуск проекту
+### Запуск проекту
 
 ```
-cp .env.example .env   # налаштувати значення
+cp .env.example .env
 docker compose up --build
 ```
 
@@ -53,18 +51,6 @@ docker compose up --build
 | PATCH  | /api/products/:id   | Оновити продукт    |
 | DELETE | /api/products/:id   | Видалити продукт   |
 
-### Перевірка міграцій
-
-```
-           List of relations
- Schema |    Name    | Type  |  Owner  
---------+------------+-------+----------
- public | categories | table | nestuser
- public | migrations | table | nestuser
- public | products   | table | nestuser
-(3 rows)
-```
-
 ### Тест створення категорії
 
 ```
@@ -77,160 +63,25 @@ docker compose up --build
 {"id":1,"name":"Laptop","description":"Gaming laptop","price":999.99,"stock":10,"isActive":true,"category":{"id":1},"createdAt":"2026-04-02T11:22:14.264Z","updatedAt":"2026-04-02T11:22:14.264Z"}
 ```
 
-### Тест отримання продуктів
-
-```
-[{"id":1,"name":"Laptop","description":"Gaming laptop","price":"999.99","stock":10,"isActive":true,"category":{"id":1,"name":"Electronics","description":"Electronic devices","createdAt":"2026-04-02T11:17:19.922Z"},"createdAt":"2026-04-02T11:22:14.264Z","updatedAt":"2026-04-02T11:22:14.264Z"}]
-```
-
-### Тест 404
-
-```
-{"message":"Cannot GET /api/fsff/ddfsfs","error":"Not Found","statusCode":404}
-```
-
 ---
 
 ## Практичне заняття №4 — DTO + class-validator + Pipes
 
-### Структура репозиторію
-
-```
-.
-├── src/
-│   ├── categories/
-│   │   ├── dto/
-│   │   │   ├── create-category.dto.ts
-│   │   │   └── update-category.dto.ts
-│   │   ├── category.entity.ts
-│   │   ├── categories.module.ts
-│   │   ├── categories.service.ts
-│   │   └── categories.controller.ts
-│   ├── products/
-│   │   ├── dto/
-│   │   │   ├── create-product.dto.ts
-│   │   │   └── update-product.dto.ts
-│   │   ├── product.entity.ts
-│   │   ├── products.module.ts
-│   │   ├── products.service.ts
-│   │   └── products.controller.ts
-│   ├── common/
-│   │   └── pipes/
-│   │       └── trim.pipe.ts
-│   ├── migrations/
-│   ├── data-source.ts
-│   ├── main.ts
-│   └── app.module.ts
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-
-### Запуск проекту
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
 ### Тест валідації — порожнє ім'я категорії
 
 ```
-curl -X POST http://localhost:3000/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name": ""}'
-
 {"message":["name must be longer than or equal to 2 characters"],"error":"Bad Request","statusCode":400}
-```
-
-### Тест валідації — від'ємна ціна продукту
-
-```
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test", "price": -5}'
-
-{"message":["price must not be less than 0.01"],"error":"Bad Request","statusCode":400}
-```
-
-### Тест валідації — зайве поле
-
-```
-curl -X POST http://localhost:3000/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test", "isAdmin": true}'
-
-{"message":["property isAdmin should not exist"],"error":"Bad Request","statusCode":400}
 ```
 
 ### Тест TrimPipe
 
 ```
-curl -X POST http://localhost:3000/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name": "  Accessories  "}'
-
 {"id":2,"name":"Accessories","createdAt":"2026-06-02T10:00:00.000Z"}
-```
-
-### Тест валідне створення продукту
-
-```
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name": "iPhone 16", "price": 999.99, "stock": 50, "categoryId": 1}'
-
-{"id":2,"name":"iPhone 16","price":999.99,"stock":50,"category":{"id":1},"createdAt":"2026-06-02T10:01:00.000Z","updatedAt":"2026-06-02T10:01:00.000Z"}
 ```
 
 ---
 
 ## Практичне заняття №5 — JWT Authentication + Guards + RBAC
-
-### Структура репозиторію
-
-```
-.
-├── src/
-│   ├── auth/
-│   │   ├── dto/
-│   │   │   ├── register.dto.ts
-│   │   │   └── login.dto.ts
-│   │   ├── auth.module.ts
-│   │   ├── auth.service.ts
-│   │   └── auth.controller.ts
-│   ├── users/
-│   │   ├── user.entity.ts
-│   │   ├── users.module.ts
-│   │   └── users.service.ts
-│   ├── common/
-│   │   ├── enums/
-│   │   │   └── role.enum.ts
-│   │   ├── guards/
-│   │   │   ├── jwt-auth.guard.ts
-│   │   │   └── roles.guard.ts
-│   │   ├── decorators/
-│   │   │   ├── current-user.decorator.ts
-│   │   │   └── roles.decorator.ts
-│   │   └── pipes/
-│   │       └── trim.pipe.ts
-│   ├── categories/ ...
-│   ├── products/ ...
-│   ├── migrations/
-│   ├── data-source.ts
-│   ├── main.ts
-│   └── app.module.ts
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-
-### Запуск проекту
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
 
 ### API Endpoints
 
@@ -240,8 +91,6 @@ docker compose up --build
 | POST   | /auth/login           | -    | -     |
 | GET    | /api/categories       | -    | -     |
 | POST   | /api/categories       | JWT  | admin |
-| PATCH  | /api/categories/:id   | JWT  | admin |
-| DELETE | /api/categories/:id   | JWT  | admin |
 | GET    | /api/products         | -    | -     |
 | POST   | /api/products         | JWT  | admin |
 | PATCH  | /api/products/:id     | JWT  | admin |
@@ -250,51 +99,112 @@ docker compose up --build
 ### Тест реєстрації
 
 ```
-curl -X POST http://localhost:3000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@test.com", "password": "password123", "name": "Admin"}'
-
 {"id":1,"email":"admin@test.com","name":"Admin","role":"user","createdAt":"2026-06-02T10:00:00.000Z"}
 ```
 
 ### Тест логіну
 
 ```
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@test.com", "password": "password123"}'
-
 {"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
 ```
 
 ### Тест 401 — запит без токена
 
 ```
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Hacked Product", "price": 1}'
-
 {"message":"Missing authorization token","error":"Unauthorized","statusCode":401}
 ```
 
-### Тест 403 — запит з роллю user
+---
+
+## Практичне заняття №6 — Interceptors + Exception Filters + Swagger
+
+### Структура репозиторію
 
 ```
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <USER_TOKEN>" \
-  -d '{"name": "Blocked Product", "price": 99}'
-
-{"message":"Insufficient permissions","error":"Forbidden","statusCode":403}
+.
+├── src/
+│   ├── auth/ ...
+│   ├── users/ ...
+│   ├── categories/ ...
+│   ├── products/ ...
+│   ├── common/
+│   │   ├── enums/
+│   │   │   └── role.enum.ts
+│   │   ├── guards/
+│   │   │   ├── jwt-auth.guard.ts
+│   │   │   └── roles.guard.ts
+│   │   ├── decorators/
+│   │   │   ├── current-user.decorator.ts
+│   │   │   └── roles.decorator.ts
+│   │   ├── interceptors/
+│   │   │   ├── logging.interceptor.ts
+│   │   │   └── transform.interceptor.ts
+│   │   ├── filters/
+│   │   │   └── http-exception.filter.ts
+│   │   └── pipes/
+│   │       └── trim.pipe.ts
+│   ├── migrations/
+│   ├── main.ts
+│   └── app.module.ts
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
-### Тест успішного створення від admin
+### Запуск проекту
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+### Swagger UI
+
+http://localhost:3000/api/docs
+
+### Формат успішної відповіді
+
+```json
+{
+  "data": { "id": 1, "name": "Electronics" },
+  "statusCode": 200,
+  "timestamp": "2026-06-02T10:30:00.000Z"
+}
+```
+
+### Формат помилки
+
+```json
+{
+  "error": {
+    "code": 400,
+    "message": "Validation failed",
+    "details": ["name must be longer than or equal to 2 characters"],
+    "traceId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  },
+  "timestamp": "2026-06-02T10:31:00.000Z"
+}
+```
+
+### Приклад логів (LoggingInterceptor)
 
 ```
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <ADMIN_TOKEN>" \
-  -d '{"name": "MacBook Pro", "price": 2499.99, "stock": 10}'
+[HTTP] GET /api/products — 200 — 12ms
+[HTTP] POST /auth/login — 200 — 45ms
+[HTTP] POST /api/products — 201 — 23ms
+```
 
-{"id":3,"name":"MacBook Pro","price":2499.99,"stock":10,"createdAt":"2026-06-02T10:05:00.000Z","updatedAt":"2026-06-02T10:05:00.000Z"}
+### Тест помилки з traceId
+
+```
+curl http://localhost:3000/api/products/999
+
+{
+  "error": {
+    "code": 404,
+    "message": "Product #999 not found",
+    "traceId": "x7y8z9ab-cdef-0123-4567-890abcdef012"
+  },
+  "timestamp": "2026-06-02T10:32:00.000Z"
+}
 ```
