@@ -3,132 +3,53 @@
 - Name: Данюк Владислав Олександрович
 - Group: 232/1 он
 
-## Практичне заняття №3 — CRUD REST API для MiniShop
+## MiniShop API — Фінальний проєкт
 
-### Структура репозиторію
+REST API інтернет-магазину на NestJS + PostgreSQL + Redis.
 
-```
-.
-├── src/
-│   ├── categories/ ...
-│   ├── products/ ...
-│   ├── migrations/
-│   ├── data-source.ts
-│   ├── app.module.ts
-│   └── main.ts
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
+### Технології
 
-### Запуск проекту
+- NestJS + TypeScript
+- PostgreSQL + TypeORM (міграції, QueryBuilder, транзакції)
+- Redis (кешування з інвалідацією)
+- JWT автентифікація + RBAC авторизація
+- class-validator + class-transformer
+- Swagger / OpenAPI
 
-```
+### Запуск
+
+```bash
 cp .env.example .env
 docker compose up --build
-```
-
-### Тест створення категорії
-
-```
-{"id":1,"name":"Electronics","description":"Electronic devices","createdAt":"2026-04-02T11:17:19.922Z"}
-```
-
-### Тест створення продукту
-
-```
-{"id":1,"name":"Laptop","description":"Gaming laptop","price":999.99,"stock":10,"isActive":true,"category":{"id":1},"createdAt":"2026-04-02T11:22:14.264Z","updatedAt":"2026-04-02T11:22:14.264Z"}
-```
-
----
-
-## Практичне заняття №4 — DTO + class-validator + Pipes
-
-### Тест валідації — порожнє ім'я категорії
-
-```
-{"message":["name must be longer than or equal to 2 characters"],"error":"Bad Request","statusCode":400}
-```
-
-### Тест TrimPipe
-
-```
-{"id":2,"name":"Accessories","createdAt":"2026-06-02T10:00:00.000Z"}
-```
-
----
-
-## Практичне заняття №5 — JWT Authentication + Guards + RBAC
-
-### API Endpoints
-
-| Method | URL                   | Auth | Role  |
-|--------|-----------------------|------|-------|
-| POST   | /auth/register        | -    | -     |
-| POST   | /auth/login           | -    | -     |
-| GET    | /api/categories       | -    | -     |
-| POST   | /api/categories       | JWT  | admin |
-| GET    | /api/products         | -    | -     |
-| POST   | /api/products         | JWT  | admin |
-| PATCH  | /api/products/:id     | JWT  | admin |
-| DELETE | /api/products/:id     | JWT  | admin |
-
-### Тест реєстрації
-
-```
-{"id":1,"email":"admin@test.com","name":"Admin","role":"user","createdAt":"2026-06-02T10:00:00.000Z"}
-```
-
-### Тест логіну
-
-```
-{"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
-```
-
----
-
-## Практичне заняття №6 — Interceptors + Exception Filters + Swagger
-
-### Формат успішної відповіді
-
-```json
-{
-  "data": { "id": 1, "name": "Electronics" },
-  "statusCode": 200,
-  "timestamp": "2026-06-02T10:30:00.000Z"
-}
-```
-
-### Формат помилки
-
-```json
-{
-  "error": {
-    "code": 400,
-    "message": "Validation failed",
-    "details": ["name must be longer than or equal to 2 characters"],
-    "traceId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-  },
-  "timestamp": "2026-06-02T10:31:00.000Z"
-}
+docker compose run --rm app npm run seed
 ```
 
 ### Swagger UI
 
 http://localhost:3000/api/docs
 
----
-
-## Практичне заняття №7 — Redis + Pagination + Filtering
-
 ### Структура репозиторію
 
 ```
 .
 ├── src/
-│   ├── auth/ ...
-│   ├── users/ ...
-│   ├── categories/ ...
+│   ├── auth/
+│   │   ├── dto/
+│   │   │   ├── register.dto.ts
+│   │   │   └── login.dto.ts
+│   │   ├── auth.module.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.controller.ts
+│   ├── users/
+│   │   ├── user.entity.ts
+│   │   ├── users.module.ts
+│   │   └── users.service.ts
+│   ├── categories/
+│   │   ├── dto/
+│   │   ├── category.entity.ts
+│   │   ├── categories.module.ts
+│   │   ├── categories.service.ts
+│   │   └── categories.controller.ts
 │   ├── products/
 │   │   ├── dto/
 │   │   │   ├── create-product.dto.ts
@@ -138,10 +59,39 @@ http://localhost:3000/api/docs
 │   │   ├── products.module.ts
 │   │   ├── products.service.ts
 │   │   └── products.controller.ts
+│   ├── orders/
+│   │   ├── dto/
+│   │   │   ├── create-order.dto.ts
+│   │   │   ├── create-order-item.dto.ts
+│   │   │   ├── update-order-status.dto.ts
+│   │   │   └── order-query.dto.ts
+│   │   ├── entities/
+│   │   │   ├── order.entity.ts
+│   │   │   └── order-item.entity.ts
+│   │   ├── orders.module.ts
+│   │   ├── orders.service.ts
+│   │   └── orders.controller.ts
+│   ├── common/
+│   │   ├── enums/
+│   │   │   ├── role.enum.ts
+│   │   │   └── order-status.enum.ts
+│   │   ├── guards/
+│   │   │   ├── jwt-auth.guard.ts
+│   │   │   └── roles.guard.ts
+│   │   ├── decorators/
+│   │   │   ├── current-user.decorator.ts
+│   │   │   └── roles.decorator.ts
+│   │   ├── interceptors/
+│   │   │   ├── logging.interceptor.ts
+│   │   │   └── transform.interceptor.ts
+│   │   ├── filters/
+│   │   │   └── http-exception.filter.ts
+│   │   └── pipes/
+│   │       └── trim.pipe.ts
 │   ├── seeds/
 │   │   └── seed.ts
-│   ├── common/ ...
 │   ├── migrations/
+│   ├── data-source.ts
 │   ├── main.ts
 │   └── app.module.ts
 ├── Dockerfile
@@ -149,85 +99,124 @@ http://localhost:3000/api/docs
 └── README.md
 ```
 
-### Запуск проекту
+### API Endpoints
 
-```bash
-cp .env.example .env
-docker compose up --build
-docker compose run --rm app npm run seed
+#### Auth
+
+| Method | URL             | Auth | Опис          |
+|--------|-----------------|------|---------------|
+| POST   | /auth/register  | -    | Реєстрація    |
+| POST   | /auth/login     | -    | Логін → JWT   |
+
+#### Categories
+
+| Method | URL                   | Auth  | Опис       |
+|--------|-----------------------|-------|------------|
+| GET    | /api/categories       | -     | Список     |
+| GET    | /api/categories/:id   | -     | Одна       |
+| POST   | /api/categories       | admin | Створити   |
+| PATCH  | /api/categories/:id   | admin | Оновити    |
+| DELETE | /api/categories/:id   | admin | Видалити   |
+
+#### Products
+
+| Method | URL                  | Auth  | Опис                        |
+|--------|----------------------|-------|-----------------------------|
+| GET    | /api/products        | -     | Список + pagination + filter |
+| GET    | /api/products/:id    | -     | Один                        |
+| POST   | /api/products        | admin | Створити                    |
+| PATCH  | /api/products/:id    | admin | Оновити                     |
+| DELETE | /api/products/:id    | admin | Видалити                    |
+
+#### Orders
+
+| Method | URL                         | Auth       | Опис                    |
+|--------|-----------------------------|------------|-------------------------|
+| POST   | /api/orders                 | user/admin | Створити замовлення     |
+| GET    | /api/orders                 | user/admin | Мої / Всі (admin)       |
+| GET    | /api/orders/:id             | user/admin | Одне (ownership check)  |
+| PATCH  | /api/orders/:id/status      | admin      | Змінити статус          |
+| DELETE | /api/orders/:id             | admin      | Видалити                |
+
+### Тест створення замовлення
+
 ```
-
-### API: GET /api/products
-
-| Параметр   | Тип    | Default    | Опис                          |
-|------------|--------|------------|-------------------------------|
-| page       | number | 1          | Номер сторінки                |
-| pageSize   | number | 10         | Елементів на сторінку (max 100) |
-| sort       | string | createdAt  | Поле сортування               |
-| order      | asc/desc | desc     | Напрямок                      |
-| categoryId | number | -          | Фільтр за категорією          |
-| minPrice   | number | -          | Мінімальна ціна               |
-| maxPrice   | number | -          | Максимальна ціна              |
-| search     | string | -          | Пошук за назвою (ILIKE)       |
-
-### Тест пагінації
-
-```
-curl "http://localhost:3000/api/products?page=1&pageSize=5"
+curl -X POST http://localhost:3000/api/orders \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -d '{"items":[{"productId":1,"quantity":2},{"productId":5,"quantity":1}]}'
 
 {
   "data": {
+    "id": 1,
+    "status": "pending",
+    "totalPrice": "2247.00",
     "items": [...],
-    "meta": { "page": 1, "pageSize": 5, "total": 30, "totalPages": 6 }
+    "createdAt": "2026-06-02T10:00:00.000Z"
   },
-  "statusCode": 200,
-  "timestamp": "2026-06-02T10:30:00.000Z"
+  "statusCode": 201
 }
 ```
 
-### Тест фільтрації
+### Тест ownership (403)
 
 ```
-curl "http://localhost:3000/api/products?categoryId=1&minPrice=500"
+curl http://localhost:3000/api/orders/1 \
+  -H "Authorization: Bearer <OTHER_USER_TOKEN>"
 
 {
-  "data": {
-    "items": [MacBook Pro, iPhone 16, iPad Air ...],
-    "meta": { "page": 1, "pageSize": 10, "total": 6, "totalPages": 1 }
-  },
-  "statusCode": 200
-}
-```
-
-### Тест пошуку
-
-```
-curl "http://localhost:3000/api/products?search=mac"
-
-{
-  "data": {
-    "items": [{"name": "MacBook Pro"}, ...],
-    "meta": { "total": 3 }
+  "error": {
+    "code": 403,
+    "message": "You can only view your own orders",
+    "traceId": "..."
   }
 }
 ```
 
-### Тест кешування (Redis)
+### Тест зміни статусу
 
 ```
-docker compose exec redis redis-cli KEYS "products:*"
+curl -X PATCH http://localhost:3000/api/orders/1/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+  -d '{"status": "confirmed"}'
 
-1) "products:{\"page\":1,\"pageSize\":10,\"sort\":\"createdAt\",\"order\":\"desc\"}"
+{
+  "data": { "id": 1, "status": "confirmed", ... },
+  "statusCode": 200
+}
 ```
 
-### Тест інвалідації кешу
+### Тест insufficient stock
 
 ```
-# До POST — є ключ
-docker compose exec redis redis-cli KEYS "products:*"
-1) "products:{...}"
+curl -X POST http://localhost:3000/api/orders \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -d '{"items":[{"productId":1,"quantity":99999}]}'
 
-# Після POST /api/products
-docker compose exec redis redis-cli KEYS "products:*"
-(empty array)
+{
+  "error": {
+    "code": 400,
+    "message": "Insufficient stock for \"iPhone 16\": available 48, requested 99999",
+    "traceId": "..."
+  }
+}
+```
+
+### Тест невалідного переходу статусу
+
+```
+curl -X PATCH http://localhost:3000/api/orders/1/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+  -d '{"status": "pending"}'
+
+{
+  "error": {
+    "code": 400,
+    "message": "Cannot transition from \"confirmed\" to \"pending\". Allowed transitions: shipped, cancelled",
+    "traceId": "..."
+  }
+}
 ```
